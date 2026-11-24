@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=vattery battery monitor
+Comment=Show the laptop battery charge in the tray
+Exec=vattery
+Icon=battery
+Terminal=false
+Categories=System;Monitor;

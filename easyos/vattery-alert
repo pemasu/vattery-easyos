@@ -1,0 +1,16 @@
+#!/bin/sh
+# vattery-alert: show a low-battery message with whatever dialog tool EasyOS has.
+MSG="${1:-battery is low}"
+if command -v gxmessage >/dev/null 2>&1; then
+  exec gxmessage -center -title "vattery" "$MSG"
+elif command -v yad >/dev/null 2>&1; then
+  exec yad --center --title="vattery" --image=dialog-warning --text="$MSG" --button=OK
+elif command -v Xdialog >/dev/null 2>&1; then
+  exec Xdialog --title "vattery" --msgbox "$MSG" 0 0
+elif command -v notify-send >/dev/null 2>&1; then
+  exec notify-send -u critical "vattery" "$MSG"
+elif command -v xmessage >/dev/null 2>&1; then
+  exec xmessage -center "$MSG"
+else
+  echo "vattery: $MSG" >&2
+fi

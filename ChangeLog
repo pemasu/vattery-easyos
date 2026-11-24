@@ -1,0 +1,54 @@
+Modified by Petri Makinen, 2026 (EasyOS editions v1-v6).
+This file is the prominent notice of changes required by GPL v3 section 5(a).
+The original vattery 0.7.5 is (c) 2011 Jezra Lickter; see AUTHORS.
+All modifications are released under the same licence: GNU GPL v3 or later
+(see COPYING).
+
+0.7.6-easyos v6
+* Preferences: new Conservation Mode section (above Warning). Detects
+    supported laptops (Lenovo ideapad_acpi, kernel charge_control_end_threshold,
+    Huawei, LG Gram, Samsung, Sony VAIO, Acer), shows ON/OFF status and
+    turns it on (about 80 %) or off (100 %) immediately.
+
+0.7.5-easyos v5
+*cleanup: removed autotools/intltool build files and unused translations;
+ Vala source moved to vala/
+
+0.7.5-easyos v4
+*tray tooltip shows remaining time, e.g. "63 %l - 6 hours 5 mins remaining time"
+
+0.7.5-easyos v3
+*commands run through /bin/sh -c (redirects such as > now work)
+*alert levels are checked right after saving preferences
+
+0.7.5-easyos v2
+*tray bar drawn with whole numbers, so it shows in decimal-comma languages
+*text mode "%" fixed
+
+0.7.5-easyos v1
+*EasyOS: detect batteries by sysfs type, skip peripheral batteries
+*accept energy_*, charge_* or capacity
+*plugged in + full/not charging/unknown counts as charged
+*alerts via vattery-alert helper (gxmessage/yad/Xdialog/notify-send/xmessage)
+*0% no longer reported as "no batteries"; guard divide-by-zero
+*Quit menu item; build-easyos.sh without autotools
+
+0.7
+*added 'text mode'
+
+0.67
+*builds with vala 0.8
+*works with GTK+2 2.20
+
+0.66
+*function get_battery_status now checks for multiple batteries
+*added function set_tooltip_text
+*added "charged" color
+
+0.6.5
+*switched build system to automake
+*internationalized
+*build clean on Vala 0.7.10
+
+0.6.4
+*updated to Vala 0.7.9

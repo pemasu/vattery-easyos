@@ -1,0 +1,117 @@
+vattery 0.7.9 - EasyOS edition
+==============================
+
+Credits
+-------
+vattery was written by Jezra J Lickter, (c) 2011
+(http://www.jezra.net/projects/vattery). See AUTHORS, README and COPYING.
+This edition only adds changes for EasyOS on top of his program; they are
+listed below and in ChangeLog. Licence: GNU GPL v3 or later, same as the
+original.
+
+A battery monitor for the JWM tray in Barry Kauler's EasyOS (tested to build
+against GTK 2.24; EasyOS "Excalibur" uses X11 and the JWM tray, which
+vattery needs). Mouse over the icon to see the percentage, right-click it for
+Preferences, About and Quit.
+
+Install
+-------
+1. Compiling needs gcc. On EasyOS, click the "devx" container icon on the
+   desktop, then in a terminal:
+
+     tar xzf vattery-0.7.5-easyos.tar.gz
+     cd vattery-0.7.5-easyos
+     ./build-easyos.sh
+
+   If it says GTK2 development files are missing: install libgtk2.0-dev
+
+2. On the main desktop, from the same folder:
+
+     ./build-easyos.sh
+     
+   (If you built inside the devx container, copy the folder to /files first
+   so the main desktop can see it.)
+
+  Files in this package
+---------------------
+  AUTHORS, COPYING, README   original author, licence and readme (unchanged)
+  ChangeLog                  version history, original and EasyOS
+  README-EASYOS              this file
+  build-easyos.sh            builds, installs and uninstalls vattery
+  src/*.c                    the C code that build-easyos.sh compiles
+  vala/*.vala, config.vapi   the original Vala source, with the EasyOS changes
+  easyos/                    tray start-up script, menu entry, alert helper
+
+You only need the vala/ folder if you want to change the program. After
+editing a .vala file, turn it into C again (needs the Vala compiler):
+
+  cd vala
+  valac -C --vapidir=. --pkg config --pkg gtk+-2.0 \
+        main.vala configuration.vala configurationGUI.vala battery.vala conservation.vala
+  mv *.c ../src/
+  cd .. && ./build-easyos.sh
+
+The old autotools build files (configure, Makefiles...) and the unused
+translation files were removed; build-easyos.sh replaces them.
+
+What changed from 0.7.5
+-----------------------
+* Finds batteries by their "type" in /sys/class/power_supply, not only BAT*
+  names, and ignores mouse/keyboard batteries.
+* Reads energy_*, charge_* or capacity files, so newer laptops work.
+* "Full", "Not charging" and "Unknown" while plugged in now show the charged
+  colour instead of the draining colour.
+* Low-battery alerts use vattery-alert, which picks gxmessage, yad, Xdialog,
+  notify-send or xmessage - whichever EasyOS has. You can still type your own
+  command in Preferences.
+* Shows 0% correctly instead of "no batteries found"; no crash when a battery
+  reports a capacity of 0.
+* Added Quit to the tray menu.
+* C sources regenerated with Vala 0.56, so no Vala compiler is needed.
+
+Settings are kept in /root/.config/vattery/config as before.
+
+Fix in v2 (2026-11-21)
+----------------------
+The tray icon could show an empty white battery with no blue/green/red bar
+when the system language uses a decimal comma (Finnish, German, Swedish...).
+The bar's size was written as "57,0", which the SVG reader rejects. vattery
+now writes whole numbers, so the bar shows in every language. Text mode's
+"%" sign is fixed too.
+
+Fix in v3 (2026-11-21)
+----------------------
+- Commands now run through the shell (/bin/sh -c), so things like
+  "echo mem > /sys/power/state" (suspend), pipes and && work.
+- After you press Save in Preferences, vattery checks the new alert levels
+  straight away instead of waiting for the battery level to change.
+- Every command vattery runs is printed, e.g. "vattery: running: ...".
+  Start vattery from a terminal to see them.
+Alerts only fire while running on battery, not while the charger is in.
+
+New in v4 (2026-11-22)
+----------------------
+- Hovering over the tray icon now shows the remaining time, e.g.
+    63 % - 6 hours 5 mins remaining time     (on battery)
+    80 % - 30 mins until full                (charging)
+    100 % - fully charged
+  It is worked out from the battery's power draw (power_now or current_now in
+  /sys/class/power_supply), smoothed so it doesn't jump around. Just after
+  plugging in or unplugging, give it a few seconds to settle. If the battery
+  doesn't report its power draw, only the percentage is shown.
+- The tray text is also printed in the terminal ("vattery: tray: ...")
+  whenever it changes.
+- Your settings (warning/critical commands etc.) are kept as they are.
+
+Clean up v5 (2026-11-23)
+----------------------
+*cleanup: removed autotools/intltool build files and unused translations;
+ Vala source moved to vala/
+
+New in v6 (2026-11-24)
+----------------------
+Conservation Mode (v6)
+  Preferences has a Conservation Mode section. If your laptop's driver
+  supports it, it shows whether it is ON or OFF and has Turn on / Turn off
+  buttons, which take effect immediately (no need to press OK). The setting
+  is kept by the laptop itself, not in vattery's config file.
