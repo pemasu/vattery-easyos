@@ -1201,7 +1201,7 @@ main_controller_display_about_dialog (main_controller* self)
 	gtk_about_dialog_set_program_name (aboutDialog, _tmp4_);
 	_tmp5_ = self->priv->app_version;
 	gtk_about_dialog_set_version (aboutDialog, _tmp5_);
-	gtk_about_dialog_set_comments (aboutDialog, "Tray battery monitor and conservation mode option.\nPatched for EasyOS.");
+	gtk_about_dialog_set_comments (aboutDialog, "A fairly simple battery monitor.\nPatched for EasyOS.");
 	gtk_about_dialog_set_website (aboutDialog, "http://www.jezra.net/projects/vattery");
 	gtk_about_dialog_set_copyright (aboutDialog, "©2011 Jezra J Lickter");
 	gtk_widget_show_all ((GtkWidget*) aboutDialog);
@@ -1315,7 +1315,7 @@ main_controller_update_status_icon (main_controller* self)
 	svg_str = _tmp9_;
 	_tmp10_ = svg_str;
 	_tmp11_ = g_strconcat (_tmp10_, "<svg width=\"100px\" height=\"100px\" viewbox=\"0 0 200 200\" preserve" \
-"AspectRatio=\"meet\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/sv" \
+"AspectRatio=\"xMidYMid meet\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/sv" \
 "g\">\n", NULL);
 	_g_free0 (svg_str);
 	svg_str = _tmp11_;
