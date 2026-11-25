@@ -1314,7 +1314,7 @@ main_controller_update_status_icon (main_controller* self)
 	_g_free0 (svg_str);
 	svg_str = _tmp9_;
 	_tmp10_ = svg_str;
-	_tmp11_ = g_strconcat (_tmp10_, "<svg width=\"100px\" height=\"100px\" viewBox=\"0 0 200 200\" preserve" \
+	_tmp11_ = g_strconcat (_tmp10_, "<svg width=\"100px\" height=\"100px\" viewBox=\"0 0 100 100\" preserve" \
 "AspectRatio=\"xMidYMid meet\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/sv" \
 "g\">\n", NULL);
 	_g_free0 (svg_str);
