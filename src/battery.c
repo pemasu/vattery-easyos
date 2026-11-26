@@ -144,6 +144,8 @@ VALA_EXTERN void battery_get_status (Battery* self,
 static gboolean battery_get_sys_status (Battery* self);
 static gboolean battery_get_proc_status (Battery* self);
 static gchar* battery_read_trimmed (const gchar* path);
+static gchar* battery_usable_state (const gchar* value);
+static gchar* battery_proc_state_for (const gchar* name);
 static void battery_update_time_left (Battery* self,
                                gboolean usable,
                                gint64 now,
@@ -157,6 +159,7 @@ static void _vala_array_destroy (gpointer array,
 static void _vala_array_free (gpointer array,
                        gssize array_length,
                        GDestroyNotify destroy_func);
+static gssize _vala_array_length (gpointer array);
 
 static GType
 battery_data_type_get_type_once (void)
@@ -808,6 +811,260 @@ battery_read_trimmed (const gchar* path)
 	return result;
 }
 
+static gchar*
+battery_usable_state (const gchar* value)
+{
+	gchar* state = NULL;
+	gchar* _tmp0_;
+	gchar* _tmp1_;
+	gchar* _tmp2_;
+	gchar* _tmp3_;
+	gboolean _tmp4_ = FALSE;
+	const gchar* _tmp5_;
+	gboolean _tmp7_ = FALSE;
+	gboolean _tmp8_ = FALSE;
+	const gchar* _tmp9_;
+	gchar* _tmp13_;
+	gchar* result;
+	g_return_val_if_fail (value != NULL, NULL);
+	_tmp0_ = string_strip (value);
+	_tmp1_ = _tmp0_;
+	_tmp2_ = g_utf8_strdown (_tmp1_, (gssize) -1);
+	_tmp3_ = _tmp2_;
+	_g_free0 (_tmp1_);
+	state = _tmp3_;
+	_tmp5_ = state;
+	if (g_strcmp0 (_tmp5_, "charging") == 0) {
+		_tmp4_ = TRUE;
+	} else {
+		const gchar* _tmp6_;
+		_tmp6_ = state;
+		_tmp4_ = g_strcmp0 (_tmp6_, "discharging") == 0;
+	}
+	if (_tmp4_) {
+		result = state;
+		return result;
+	}
+	_tmp9_ = state;
+	if (g_strcmp0 (_tmp9_, "charged") == 0) {
+		_tmp8_ = TRUE;
+	} else {
+		const gchar* _tmp10_;
+		_tmp10_ = state;
+		_tmp8_ = g_strcmp0 (_tmp10_, "full") == 0;
+	}
+	if (_tmp8_) {
+		_tmp7_ = TRUE;
+	} else {
+		const gchar* _tmp11_;
+		_tmp11_ = state;
+		_tmp7_ = g_strcmp0 (_tmp11_, "not charging") == 0;
+	}
+	if (_tmp7_) {
+		gchar* _tmp12_;
+		_tmp12_ = g_strdup ("charged");
+		result = _tmp12_;
+		_g_free0 (state);
+		return result;
+	}
+	_tmp13_ = g_strdup ("");
+	result = _tmp13_;
+	_g_free0 (state);
+	return result;
+}
+
+static gint
+string_index_of (const gchar* self,
+                 const gchar* needle,
+                 gint start_index)
+{
+	gchar* _result_ = NULL;
+	gchar* _tmp0_;
+	gchar* _tmp1_;
+	gint result;
+	g_return_val_if_fail (self != NULL, -1);
+	g_return_val_if_fail (needle != NULL, -1);
+	_tmp0_ = strstr (((gchar*) self) + start_index, (gchar*) needle);
+	_result_ = _tmp0_;
+	_tmp1_ = _result_;
+	if (_tmp1_ != NULL) {
+		gchar* _tmp2_;
+		_tmp2_ = _result_;
+		result = (gint) (_tmp2_ - ((gchar*) self));
+		return result;
+	} else {
+		result = -1;
+		return result;
+	}
+}
+
+static glong
+string_strnlen (gchar* str,
+                glong maxlen)
+{
+	gchar* end = NULL;
+	gchar* _tmp0_;
+	gchar* _tmp1_;
+	glong result;
+	_tmp0_ = memchr (str, 0, (gsize) maxlen);
+	end = _tmp0_;
+	_tmp1_ = end;
+	if (_tmp1_ == NULL) {
+		result = maxlen;
+		return result;
+	} else {
+		gchar* _tmp2_;
+		_tmp2_ = end;
+		result = (glong) (_tmp2_ - str);
+		return result;
+	}
+}
+
+static gchar*
+string_substring (const gchar* self,
+                  glong offset,
+                  glong len)
+{
+	glong string_length = 0L;
+	gboolean _tmp0_ = FALSE;
+	gchar* _tmp3_;
+	gchar* result;
+	g_return_val_if_fail (self != NULL, NULL);
+	if (offset >= ((glong) 0)) {
+		_tmp0_ = len >= ((glong) 0);
+	} else {
+		_tmp0_ = FALSE;
+	}
+	if (_tmp0_) {
+		string_length = string_strnlen ((gchar*) self, offset + len);
+	} else {
+		gint _tmp1_;
+		gint _tmp2_;
+		_tmp1_ = strlen (self);
+		_tmp2_ = _tmp1_;
+		string_length = (glong) _tmp2_;
+	}
+	if (offset < ((glong) 0)) {
+		offset = string_length + offset;
+		g_return_val_if_fail (offset >= ((glong) 0), NULL);
+	} else {
+		g_return_val_if_fail (offset <= string_length, NULL);
+	}
+	if (len < ((glong) 0)) {
+		len = string_length - offset;
+	}
+	g_return_val_if_fail ((offset + len) <= string_length, NULL);
+	_tmp3_ = g_strndup (((gchar*) self) + offset, (gsize) len);
+	result = _tmp3_;
+	return result;
+}
+
+static gchar*
+battery_proc_state_for (const gchar* name)
+{
+	const gchar* _tmp0_ = NULL;
+	const gchar* _tmp1_;
+	gchar* root = NULL;
+	gchar* _tmp2_;
+	gchar* contents = NULL;
+	const gchar* _tmp3_;
+	gchar* _tmp4_;
+	gchar* _tmp5_;
+	gchar* _tmp6_;
+	gchar* _tmp7_;
+	const gchar* _tmp8_;
+	gchar** _tmp9_;
+	gchar** _tmp10_;
+	gchar* _tmp26_;
+	gchar* result;
+	g_return_val_if_fail (name != NULL, NULL);
+	_tmp1_ = g_getenv ("VATTERY_PROC_BATTERY_DIR");
+	_tmp0_ = _tmp1_;
+	if (_tmp0_ == NULL) {
+		_tmp0_ = DIR_PROC;
+	}
+	_tmp2_ = g_strdup (_tmp0_);
+	root = _tmp2_;
+	_tmp3_ = root;
+	_tmp4_ = g_build_filename (_tmp3_, name, "state", NULL);
+	_tmp5_ = _tmp4_;
+	_tmp6_ = battery_read_trimmed (_tmp5_);
+	_tmp7_ = _tmp6_;
+	_g_free0 (_tmp5_);
+	contents = _tmp7_;
+	_tmp8_ = contents;
+	_tmp10_ = _tmp9_ = g_strsplit (_tmp8_, "\n", 0);
+	{
+		gchar** line_collection = NULL;
+		gint line_collection_length1 = 0;
+		gint _line_collection_size_ = 0;
+		gint line_it = 0;
+		line_collection = _tmp10_;
+		line_collection_length1 = _vala_array_length (_tmp9_);
+		for (line_it = 0; line_it < line_collection_length1; line_it = line_it + 1) {
+			gchar* _tmp11_;
+			gchar* line = NULL;
+			_tmp11_ = g_strdup (line_collection[line_it]);
+			line = _tmp11_;
+			{
+				gint colon = 0;
+				const gchar* _tmp12_;
+				gboolean _tmp13_ = FALSE;
+				_tmp12_ = line;
+				colon = string_index_of (_tmp12_, ":", 0);
+				if (colon >= 0) {
+					const gchar* _tmp14_;
+					gchar* _tmp15_;
+					gchar* _tmp16_;
+					gchar* _tmp17_;
+					gchar* _tmp18_;
+					gchar* _tmp19_;
+					gchar* _tmp20_;
+					_tmp14_ = line;
+					_tmp15_ = string_substring (_tmp14_, (glong) 0, (glong) colon);
+					_tmp16_ = _tmp15_;
+					_tmp17_ = string_strip (_tmp16_);
+					_tmp18_ = _tmp17_;
+					_tmp19_ = g_utf8_strdown (_tmp18_, (gssize) -1);
+					_tmp20_ = _tmp19_;
+					_tmp13_ = g_strcmp0 (_tmp20_, "charging state") == 0;
+					_g_free0 (_tmp20_);
+					_g_free0 (_tmp18_);
+					_g_free0 (_tmp16_);
+				} else {
+					_tmp13_ = FALSE;
+				}
+				if (_tmp13_) {
+					const gchar* _tmp21_;
+					gchar* _tmp22_;
+					gchar* _tmp23_;
+					gchar* _tmp24_;
+					gchar* _tmp25_;
+					_tmp21_ = line;
+					_tmp22_ = string_substring (_tmp21_, (glong) (colon + 1), (glong) -1);
+					_tmp23_ = _tmp22_;
+					_tmp24_ = battery_usable_state (_tmp23_);
+					_tmp25_ = _tmp24_;
+					_g_free0 (_tmp23_);
+					result = _tmp25_;
+					_g_free0 (line);
+					line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
+					_g_free0 (contents);
+					_g_free0 (root);
+					return result;
+				}
+				_g_free0 (line);
+			}
+		}
+		line_collection = (_vala_array_free (line_collection, line_collection_length1, (GDestroyNotify) g_free), NULL);
+	}
+	_tmp26_ = g_strdup ("");
+	result = _tmp26_;
+	_g_free0 (contents);
+	_g_free0 (root);
+	return result;
+}
+
 static gint64
 int64_parse (const gchar* str,
              guint _base)
@@ -837,10 +1094,10 @@ battery_get_sys_status (Battery* self)
 	gboolean rate_ok = FALSE;
 	gchar* units = NULL;
 	gchar* _tmp3_;
-	gint64 _tmp110_ = 0LL;
-	gboolean _tmp111_ = FALSE;
+	gint64 _tmp113_ = 0LL;
+	gboolean _tmp114_ = FALSE;
 	gint64 percent = 0LL;
-	gboolean _tmp118_ = FALSE;
+	gboolean _tmp121_ = FALSE;
 	GError* _inner_error0_ = NULL;
 	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
@@ -919,6 +1176,7 @@ battery_get_sys_status (Battery* self)
 			gchar* _tmp99_;
 			gchar* _tmp100_;
 			const gchar* _tmp101_;
+			const gchar* _tmp104_;
 			_tmp6_ = dir;
 			_tmp7_ = g_dir_read_name (_tmp6_);
 			_tmp8_ = g_strdup (_tmp7_);
@@ -1209,18 +1467,27 @@ battery_get_sys_status (Battery* self)
 			_tmp96_ = _tmp95_;
 			_tmp97_ = battery_read_trimmed (_tmp96_);
 			_tmp98_ = _tmp97_;
-			_tmp99_ = g_utf8_strdown (_tmp98_, (gssize) -1);
+			_tmp99_ = battery_usable_state (_tmp98_);
 			_tmp100_ = _tmp99_;
 			_g_free0 (_tmp98_);
 			_g_free0 (_tmp96_);
 			status = _tmp100_;
 			_tmp101_ = status;
-			if (g_strcmp0 (_tmp101_, "charging") == 0) {
+			if (g_strcmp0 (_tmp101_, "") == 0) {
+				const gchar* _tmp102_;
+				gchar* _tmp103_;
+				_tmp102_ = name;
+				_tmp103_ = battery_proc_state_for (_tmp102_);
+				_g_free0 (status);
+				status = _tmp103_;
+			}
+			_tmp104_ = status;
+			if (g_strcmp0 (_tmp104_, "charging") == 0) {
 				any_charging = TRUE;
 			} else {
-				const gchar* _tmp102_;
-				_tmp102_ = status;
-				if (g_strcmp0 (_tmp102_, "discharging") == 0) {
+				const gchar* _tmp105_;
+				_tmp105_ = status;
+				if (g_strcmp0 (_tmp105_, "discharging") == 0) {
 					any_discharging = TRUE;
 				}
 			}
@@ -1235,97 +1502,97 @@ battery_get_sys_status (Battery* self)
 	__catch0_g_error:
 	{
 		GError* e = NULL;
-		FILE* _tmp103_;
-		GError* _tmp104_;
-		const gchar* _tmp105_;
+		FILE* _tmp106_;
+		GError* _tmp107_;
+		const gchar* _tmp108_;
 		e = _inner_error0_;
 		_inner_error0_ = NULL;
-		_tmp103_ = stderr;
-		_tmp104_ = e;
-		_tmp105_ = _tmp104_->message;
-		fprintf (_tmp103_, "%s\n", _tmp105_);
+		_tmp106_ = stderr;
+		_tmp107_ = e;
+		_tmp108_ = _tmp107_->message;
+		fprintf (_tmp106_, "%s\n", _tmp108_);
 		_g_error_free0 (e);
 	}
 	__finally0:
 	if (G_UNLIKELY (_inner_error0_ != NULL)) {
-		gboolean _tmp106_ = FALSE;
+		gboolean _tmp109_ = FALSE;
 		_g_free0 (units);
 		_g_free0 (root);
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
 		g_clear_error (&_inner_error0_);
-		return _tmp106_;
+		return _tmp109_;
 	}
 	if (count == 0) {
-		gchar* _tmp107_;
-		FILE* _tmp108_;
-		const gchar* _tmp109_;
+		gchar* _tmp110_;
+		FILE* _tmp111_;
+		const gchar* _tmp112_;
 		self->priv->bat_percent = (gint64) 0;
-		_tmp107_ = g_strdup ("NONE");
+		_tmp110_ = g_strdup ("NONE");
 		_g_free0 (self->priv->ac_state);
-		self->priv->ac_state = _tmp107_;
-		_tmp108_ = stdout;
-		_tmp109_ = root;
-		fprintf (_tmp108_, "No battery info found in %s\n", _tmp109_);
+		self->priv->ac_state = _tmp110_;
+		_tmp111_ = stdout;
+		_tmp112_ = root;
+		fprintf (_tmp111_, "No battery info found in %s\n", _tmp112_);
 		result = FALSE;
 		_g_free0 (units);
 		_g_free0 (root);
 		return result;
 	}
 	if (all_units) {
-		_tmp111_ = sum_full > ((gint64) 0);
+		_tmp114_ = sum_full > ((gint64) 0);
 	} else {
-		_tmp111_ = FALSE;
+		_tmp114_ = FALSE;
 	}
-	if (_tmp111_) {
-		_tmp110_ = (sum_now * 100) / sum_full;
+	if (_tmp114_) {
+		_tmp113_ = (sum_now * 100) / sum_full;
 	} else {
-		_tmp110_ = pct_sum / count;
+		_tmp113_ = pct_sum / count;
 	}
-	percent = _tmp110_;
+	percent = _tmp113_;
 	self->priv->bat_percent = CLAMP (percent, (gint64) 0, (gint64) 100);
 	if (any_charging) {
-		gchar* _tmp112_;
-		_tmp112_ = g_strdup ("charging");
+		gchar* _tmp115_;
+		_tmp115_ = g_strdup ("charging");
 		_g_free0 (self->priv->ac_state);
-		self->priv->ac_state = _tmp112_;
+		self->priv->ac_state = _tmp115_;
 	} else {
-		gboolean _tmp113_ = FALSE;
+		gboolean _tmp116_ = FALSE;
 		if (any_discharging) {
-			_tmp113_ = !mains_online;
+			_tmp116_ = !mains_online;
 		} else {
-			_tmp113_ = FALSE;
+			_tmp116_ = FALSE;
 		}
-		if (_tmp113_) {
-			gchar* _tmp114_;
-			_tmp114_ = g_strdup ("discharging");
+		if (_tmp116_) {
+			gchar* _tmp117_;
+			_tmp117_ = g_strdup ("discharging");
 			_g_free0 (self->priv->ac_state);
-			self->priv->ac_state = _tmp114_;
+			self->priv->ac_state = _tmp117_;
 		} else {
-			gboolean _tmp115_ = FALSE;
+			gboolean _tmp118_ = FALSE;
 			if (mains_online) {
-				_tmp115_ = TRUE;
+				_tmp118_ = TRUE;
 			} else {
-				_tmp115_ = !any_discharging;
+				_tmp118_ = !any_discharging;
 			}
-			if (_tmp115_) {
-				gchar* _tmp116_;
-				_tmp116_ = g_strdup ("charged");
+			if (_tmp118_) {
+				gchar* _tmp119_;
+				_tmp119_ = g_strdup ("charged");
 				_g_free0 (self->priv->ac_state);
-				self->priv->ac_state = _tmp116_;
+				self->priv->ac_state = _tmp119_;
 			} else {
-				gchar* _tmp117_;
-				_tmp117_ = g_strdup ("discharging");
+				gchar* _tmp120_;
+				_tmp120_ = g_strdup ("discharging");
 				_g_free0 (self->priv->ac_state);
-				self->priv->ac_state = _tmp117_;
+				self->priv->ac_state = _tmp120_;
 			}
 		}
 	}
 	if (all_units) {
-		_tmp118_ = rate_ok;
+		_tmp121_ = rate_ok;
 	} else {
-		_tmp118_ = FALSE;
+		_tmp121_ = FALSE;
 	}
-	battery_update_time_left (self, _tmp118_, sum_now, sum_full, sum_rate);
+	battery_update_time_left (self, _tmp121_, sum_now, sum_full, sum_rate);
 	result = TRUE;
 	_g_free0 (units);
 	_g_free0 (root);
@@ -1665,5 +1932,18 @@ _vala_array_free (gpointer array,
 {
 	_vala_array_destroy (array, array_length, destroy_func);
 	g_free (array);
+}
+
+static gssize
+_vala_array_length (gpointer array)
+{
+	gssize length;
+	length = 0;
+	if (array) {
+		while (((gpointer*) array)[length]) {
+			length++;
+		}
+	}
+	return length;
 }
 
