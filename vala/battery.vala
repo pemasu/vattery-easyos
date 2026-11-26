@@ -199,6 +199,32 @@ public class Battery {
 		return "";
 	}
 
+	/* Fossa compatibility: consult only the matching ACPI battery's state.
+	 * Never replace a usable sysfs status, capacity or power reading.
+	 * Missing /proc files are normal on newer kernels. */
+	private static string usable_state(string value) {
+		var state = value.strip().down();
+		if (state == "charging" || state == "discharging") {
+			return state;
+		}
+		if (state == "charged" || state == "full" || state == "not charging") {
+			return "charged";
+		}
+		return "";
+	}
+
+	private static string proc_state_for(string name) {
+		string root = Environment.get_variable("VATTERY_PROC_BATTERY_DIR") ?? DIR_PROC;
+		var contents = read_trimmed(Path.build_filename(root, name, "state"));
+		foreach (string line in contents.split("\n")) {
+			int colon = line.index_of(":");
+			if (colon >= 0 && line.substring(0, colon).strip().down() == "charging state") {
+				return usable_state(line.substring(colon + 1));
+			}
+		}
+		return "";
+	}
+
 	/* EasyOS patch: read /sys/class/power_supply the way modern kernels expose it.
 	 * - any supply with type "Battery" counts (not only BAT*), except peripheral
 	 *   batteries such as wireless mice (scope "Device")
@@ -275,7 +301,10 @@ public class Battery {
 				}
 				pct_sum += pct.clamp(0, 100);
 				count++;
-				var status = read_trimmed(Path.build_filename(path, "status")).down();
+				var status = usable_state(read_trimmed(Path.build_filename(path, "status")));
+				if (status == "") {
+					status = proc_state_for(name);
+				}
 				if (status == "charging") {
 					any_charging = true;
 				} else if (status == "discharging") {
