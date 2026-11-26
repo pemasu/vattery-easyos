@@ -306,7 +306,7 @@ public class main_controller {
 		}
 
 		svg_str= "<?xml version=\"1.0\" standalone=\"no\"?><!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n";
-		svg_str+="<svg width=\"100px\" height=\"100px\" viewbox=\"0 0 200 200\" preserveAspectRatio=\"meet\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n";
+		svg_str+="<svg width=\"100px\" height=\"100px\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"xMidYMid meet\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n";
 		if (this.text_mode) {
 			//add text 
 			svg_str+=" <text style=\"text-align:center;\" x=\"0\" y=\"65\" fill=\"%s\" font-size = \"40\">%d%%</text>".printf(frect_color,this.bat_percent);
